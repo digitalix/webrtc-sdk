@@ -266,18 +266,24 @@
         webrtc::CreateDefaultTaskQueueFactory(dependencies.trials.get());
     cricket::MediaEngineDependencies media_deps;
 
-    // always create ADM on worker thread
-    _nativeAudioDeviceModule = _workerThread->BlockingCall([&dependencies, &bypassVoiceProcessing]() {
-      return webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::AudioLayer::kPlatformDefaultAudio,
-                                               dependencies.task_queue_factory.get(),
-                                               bypassVoiceProcessing == YES);
-	  });
+    if(!audioProcessingModule){
+        NSLog(@"ADM should work");
+        dependencies.adm = std::move(audioDeviceModule);
+    } else {
+        // always create ADM on worker thread
+        _nativeAudioDeviceModule = _workerThread->BlockingCall([&dependencies, &bypassVoiceProcessing]() {
+          return webrtc::AudioDeviceModule::Create(webrtc::AudioDeviceModule::AudioLayer::kPlatformDefaultAudio,
+                                                   dependencies.task_queue_factory.get(),
+                                                   bypassVoiceProcessing == YES);
+    	  });
 
-    _audioDeviceModule =
-        [[RTC_OBJC_TYPE(RTCAudioDeviceModule) alloc] initWithNativeModule:_nativeAudioDeviceModule
-                                                             workerThread:_workerThread.get()];
+        _audioDeviceModule =
+            [[RTC_OBJC_TYPE(RTCAudioDeviceModule) alloc] initWithNativeModule:_nativeAudioDeviceModule
+                                                                 workerThread:_workerThread.get()];
 
-    media_deps.adm = _nativeAudioDeviceModule;
+        media_deps.adm = _nativeAudioDeviceModule;
+    }
+
     media_deps.task_queue_factory = dependencies.task_queue_factory.get();
     media_deps.audio_encoder_factory = std::move(audioEncoderFactory);
     media_deps.audio_decoder_factory = std::move(audioDecoderFactory);

@@ -268,7 +268,7 @@
 
     if(!audioProcessingModule){
         NSLog(@"ADM should work");
-        dependencies.adm = std::move(audioDeviceModule);
+        media_deps.adm = std::move(audioDeviceModule);
     } else {
         // always create ADM on worker thread
         _nativeAudioDeviceModule = _workerThread->BlockingCall([&dependencies, &bypassVoiceProcessing]() {
